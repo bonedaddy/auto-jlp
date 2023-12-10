@@ -22,6 +22,37 @@ pub async fn main() -> Result<()> {
                 .arg(keypair_type_flag())]),
                 Command::new("check-jlp-liquidity"),
                 Command::new("auto-deposit")
+                .arg(
+                    Arg::new("deposit-mint")
+                    .long("deposit-mint")
+                    .help("token mint to deposit, only usdc supported")
+                )
+                .arg(
+                    Arg::new("deposit-amount")
+                    .long("deposit-amount")
+                    .help("ui amount (ie: 1.5) to deposit")
+                    .long_help("if larger than free space, 10% of free space is used")
+                    .value_parser(clap::value_parser!(f64))
+                )
+                .arg(
+                    Arg::new("deposit-mint-dollar-value")
+                    .long("deposit-mint-dollar-value")
+                    .help("approximate dollar value of 1 whole deposit token")
+                    .value_parser(clap::value_parser!(u128))
+                )
+                .arg(
+                    Arg::new("force")
+                    .long("force")
+                    .help("always force deposit regardless of available capacity")
+                    .action(clap::ArgAction::SetTrue)
+                    .required(false)
+                )
+                .arg(
+                    Arg::new("priority-fee")
+                    .long("priority-fee")
+                    .help("priority fee to use (ie: 0.01)")
+                    .value_parser(clap::value_parser!(f64))
+                )
             ]
         )
         .get_matches();

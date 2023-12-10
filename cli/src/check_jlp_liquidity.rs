@@ -12,8 +12,10 @@ pub async fn check_jlp_liquidity(matches: &clap::ArgMatches, conf_path: &str) ->
     let rpc = conf.rpc();
 
     let pool = Pubkey::from_str(POOL_ACCT).unwrap();
+    let perp = Pubkey::from_str(PERPETUALS_ACCT).unwrap();
     let jlp_cache_accounts = perpetuals::jlp_cacher::JLPCacheAccounts::load_accounts(
         &rpc,
+        perp,
         pool,
     ).await?;
 

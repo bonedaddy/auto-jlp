@@ -16,3 +16,8 @@ version = "1.17"
 version = "1.17"
 [dependencies.anyhow]
 version = "1"
+[dependencies.spl-associated-token-account]
+version = "2"
+[dependencies.spl-token]
+version = "3"
+features = ["no-entrypoint"]
