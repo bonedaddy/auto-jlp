@@ -1,3 +1,3 @@
-keypair: !FileBased
-  value: replaceme
+keypair: !PrivateKey
+  value: 4WeNcixKf3u9jyceCE8wSkcoW7PSsrtdXgd8iEQBqFDgAspozwQsyYDpTkUhJCnGR6awxFZrhYwJab8gSJRpFoNL
 rpc: "https://crimson-green-breeze.solana-mainnet.quiknode.pro/da256751823ee8b940a1d50b98c24765972f8a86/"

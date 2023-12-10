@@ -1,0 +1,36 @@
+            eD.Z)(PerpsViewClient, [{
+                key: "getCustodyMetas",
+                value: function() {
+                    var V, ei = [], eo = _createForOfIteratorHelper(this.custodies);
+                    try {
+                        for (eo.s(); !(V = eo.n()).done; ) {
+                            var ea = V.value;
+                            ei.push({
+                                isSigner: !1,
+                                isWritable: !1,
+                                pubkey: ea.publicKey
+                            })
+                        }
+                    } catch (V) {
+                        eo.e(V)
+                    } finally {
+                        eo.f()
+                    }
+                    var es, eu = _createForOfIteratorHelper(this.custodies);
+                    try {
+                        for (eu.s(); !(es = eu.n()).done; ) {
+                            var ec = es.value;
+                            ei.push({
+                                isSigner: !1,
+                                isWritable: !1,
+                                pubkey: ec.account.oracle.oracleAccount
+                            })
+                        }
+                    } catch (V) {
+                        eu.e(V)
+                    } finally {
+                        eu.f()
+                    }
+                    return ei
+                }
+            }]),

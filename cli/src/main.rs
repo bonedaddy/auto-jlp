@@ -5,6 +5,7 @@ use {
 };
 
 mod check_jlp_liquidity;
+mod auto_depositor;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
@@ -19,7 +20,8 @@ pub async fn main() -> Result<()> {
                 .aliases(["gen", "generate"])
                 .about("create and save a new configuration file")
                 .arg(keypair_type_flag())]),
-                Command::new("check-jlp-liquidity")
+                Command::new("check-jlp-liquidity"),
+                Command::new("auto-deposit")
             ]
         )
         .get_matches();
@@ -45,6 +47,9 @@ async fn process_matches(matches: &ArgMatches, conf_path: &str) -> Result<()> {
         },
         Some(("check-jlp-liquidity", cjl)) => {
             Ok(check_jlp_liquidity::check_jlp_liquidity(cjl, conf_path).await?)
+        }
+        Some(("auto-deposit", ad)) => {
+            Ok(auto_depositor::auto_deposit(ad, conf_path).await?)
         }
         _ => Err(anyhow!("{INVALID_COMMAND}")),
     }

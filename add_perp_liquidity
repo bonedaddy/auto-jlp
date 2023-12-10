@@ -1,0 +1,124 @@
+        function _addLiquidity() {
+            return (_addLiquidity = (0,
+            y.Z)(k().mark(function _callee(e) {
+                var t, n, s, r, a, o, l, c, u, m, f, x, h, g, b, w, v, y, P, N, S, T, _, A, L, Z, M, I, C, V;
+                return k().wrap(function(k) {
+                    for (; ; )
+                        switch (k.prev = k.next) {
+                        case 0:
+                            return t = e.lpTokenMint,
+                            n = e.wallet,
+                            s = e.publicKey,
+                            r = e.connection,
+                            a = e.custody,
+                            o = e.payAmount,
+                            l = e.minReceiveAmount,
+                            c = e.originalTokenAmount,
+                            u = e.custodyMetas,
+                            m = e.getSwapIx,
+                            f = e.blockhash,
+                            k.prev = 1,
+                            x = (0,
+                            E.h)(n, r),
+                            k.next = 5,
+                            (0,
+                            E.c)(t, s, r);
+                        case 5:
+                            return h = k.sent,
+                            b = (g = (0,
+                            j.Z)(h, 2))[0],
+                            w = g[1],
+                            k.next = 11,
+                            (0,
+                            E.c)(a.account.mint, s, r);
+                        case 11:
+                            if (v = k.sent,
+                            P = (y = (0,
+                            j.Z)(v, 2))[0],
+                            N = y[1],
+                            S = [],
+                            w && S.push(w),
+                            N && S.push(N),
+                            !(a.account.mint.equals(R.W4) && !m)) {
+                                k.next = 23;
+                                break
+                            }
+                            return k.next = 21,
+                            r.getBalance(P);
+                        case 21:
+                            T = k.sent,
+                            o.gt(new B.BN(T)) && (S.push(d.SystemProgram.transfer({
+                                fromPubkey: s,
+                                toPubkey: P,
+                                lamports: BigInt(o.toString())
+                            })),
+                            S.push(O.Token.createSyncNativeInstruction(O.TOKEN_PROGRAM_ID, P)));
+                        case 23:
+                            return k.next = 25,
+                            x.methods.addLiquidity({
+                                tokenAmountIn: o,
+                                minLpAmountOut: l,
+                                tokenAmountPreSwap: c
+                            }).accounts({
+                                owner: s,
+                                fundingAccount: P,
+                                lpTokenAccount: b,
+                                transferAuthority: p.oW,
+                                perpetuals: p.TJ,
+                                pool: p.FW,
+                                custody: a.publicKey,
+                                custodyOracleAccount: a.account.oracle.oracleAccount,
+                                custodyTokenAccount: a.account.tokenAccount,
+                                lpTokenMint: t,
+                                tokenProgram: O.TOKEN_PROGRAM_ID
+                            }).remainingAccounts(u).instruction();
+                        case 25:
+                            return _ = k.sent,
+                            A = [d.ComputeBudgetProgram.setComputeUnitLimit({
+                                units: 14e5
+                            })].concat(S),
+                            k.t0 = i.Z,
+                            k.next = 30,
+                            K(r, [p.vN]);
+                        case 30:
+                            if (k.t1 = k.sent,
+                            L = (0,
+                            k.t0)(k.t1),
+                            !m) {
+                                k.next = 42;
+                                break
+                            }
+                            return k.next = 35,
+                            m({
+                                userPublicKey: s
+                            });
+                        case 35:
+                            M = (Z = k.sent).swapInstruction,
+                            I = Z.addressLookupTableAccounts,
+                            L.push.apply(L, (0,
+                            i.Z)(I)),
+                            A.push(M, _),
+                            k.next = 43;
+                            break;
+                        case 42:
+                            A.push(_);
+                        case 43:
+                            return C = new d.TransactionMessage({
+                                payerKey: s,
+                                recentBlockhash: f,
+                                instructions: A
+                            }).compileToV0Message(L),
+                            V = new d.VersionedTransaction(C),
+                            k.abrupt("return", V);
+                        case 48:
+                            throw k.prev = 48,
+                            k.t2 = k.catch(1),
+                            console.log(k.t2),
+                            k.t2;
+                        case 52:
+                        case "end":
+                            return k.stop()
+                        }
+                }, _callee, null, [[1, 48]])
+            }))).apply(this, arguments)
+        }
