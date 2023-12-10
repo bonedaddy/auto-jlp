@@ -2,6 +2,7 @@
 //! suitable for customization to a variety of needs
 
 use keypair::KeypairType;
+use solana_client::nonblocking::rpc_client::RpcClient;
 use {
     anyhow::{Context, Result},
     serde::{Deserialize, Serialize},
@@ -12,6 +13,7 @@ pub mod keypair;
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Configuration {
     pub keypair: keypair::KeypairType,
+    pub rpc: String,
 }
 
 impl Configuration {
@@ -51,6 +53,9 @@ impl Configuration {
     pub fn load(file_path: &str) -> Result<Self> {
         serde_yaml::from_str(&std::fs::read_to_string(file_path).with_context(|| LOAD_FAILURE)?)
             .with_context(|| DESERIALIZE_FAILURE)
+    }
+    pub fn rpc(&self) -> RpcClient {
+        RpcClient::new(self.rpc.clone())
     }
 }
 

@@ -4,7 +4,7 @@ build:
 
 .PHONY: build-debug
 build-debug:
-	(cargo build && cp target/debug/cli rust-starter)
+	(cargo build && cp target/debug/cli auto-jlp)
 .PHONY: fmt
 fmt:
 	( find . -type f -name "*.rs" -not -path *target* -exec rustfmt --edition 2021 {} \; )

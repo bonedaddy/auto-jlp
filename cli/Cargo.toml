@@ -16,3 +16,11 @@ version = "1"
 path = "../config"
 [dependencies.utils]
 path = "../utils"
+[dependencies.perpetuals]
+path = "../perpetuals"
+[dependencies.borsh]
+version = "1"
+[dependencies.anchor-lang]
+version = "0.29"
+[dependencies.solana-sdk]
+version = "1.17"

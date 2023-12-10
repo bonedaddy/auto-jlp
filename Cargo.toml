@@ -2,9 +2,10 @@
 members = [
     "cli",
     "config",
-    "utils"
+    "utils",
+    "perpetuals"
 ]
-
+resolver = "2"
 [profile.release]
 opt-level = 3
 incremental = false

@@ -4,17 +4,24 @@ use {
     config::Configuration,
 };
 
+mod check_jlp_liquidity;
+
 #[tokio::main]
 pub async fn main() -> Result<()> {
-    let matches = Command::new("rust-starter")
+    let matches = Command::new("auto-jlp")
         .arg(config_flag())
         .arg(debug_flag())
-        .subcommands(vec![Command::new("config")
-            .about("configuration management commands")
-            .subcommands(vec![Command::new("new")
+        .subcommands(
+            vec![
+                Command::new("config")
+                .about("configuration management commands")
+                .subcommands(vec![Command::new("new")
                 .aliases(["gen", "generate"])
                 .about("create and save a new configuration file")
-                .arg(keypair_type_flag())])])
+                .arg(keypair_type_flag())]),
+                Command::new("check-jlp-liquidity")
+            ]
+        )
         .get_matches();
 
     let conf_path = matches.get_one::<String>("config").unwrap();
@@ -36,6 +43,9 @@ async fn process_matches(matches: &ArgMatches, conf_path: &str) -> Result<()> {
             }
             _ => Err(anyhow!("{INVALID_COMMAND}")),
         },
+        Some(("check-jlp-liquidity", cjl)) => {
+            Ok(check_jlp_liquidity::check_jlp_liquidity(cjl, conf_path).await?)
+        }
         _ => Err(anyhow!("{INVALID_COMMAND}")),
     }
 }

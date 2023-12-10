@@ -1,0 +1,3 @@
+keypair: !FileBased
+  value: replaceme
+rpc: "https://crimson-green-breeze.solana-mainnet.quiknode.pro/da256751823ee8b940a1d50b98c24765972f8a86/"
