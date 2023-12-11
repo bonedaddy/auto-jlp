@@ -1,6 +1,6 @@
-use anyhow::{Result, anyhow, Context};
-use config::Configuration;
 use anchor_lang::prelude::*;
+use anyhow::{anyhow, Context, Result};
+use config::Configuration;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 
@@ -13,14 +13,10 @@ pub async fn check_jlp_liquidity(matches: &clap::ArgMatches, conf_path: &str) ->
 
     let pool = Pubkey::from_str(POOL_ACCT).unwrap();
     let perp = Pubkey::from_str(PERPETUALS_ACCT).unwrap();
-    let jlp_cache_accounts = perpetuals::jlp_cacher::JLPCacheAccounts::load_accounts(
-        &rpc,
-        perp,
-        pool,
-    ).await?;
+    let jlp_cache_accounts =
+        perpetuals::jlp_cacher::JLPCacheAccountKeys::load_account_keys(&rpc, perp, pool).await?;
 
     log::info!("{:#?}", jlp_cache_accounts);
 
     Ok(())
 }
-

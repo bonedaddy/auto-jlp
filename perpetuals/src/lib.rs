@@ -7,11 +7,7 @@
 //! [anchor-gen](https://github.com/saber-hq/anchor-gen), a crate for generating
 //! Anchor CPI helpers from JSON IDLs.
 
-
-anchor_gen::generate_cpi_interface!(
-    idl_path = "idl.json"
-);
-
+anchor_gen::generate_cpi_interface!(idl_path = "idl.json");
 
 declare_id!("PERPHjGBqRHArX4DySjwM6UJHiR3sWAatqfdBS2qQJu");
 

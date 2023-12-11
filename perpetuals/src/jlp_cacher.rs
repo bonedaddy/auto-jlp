@@ -1,12 +1,16 @@
-use anchor_lang::{AnchorDeserialize, ToAccountMetas, InstructionData};
+use anchor_lang::{AnchorDeserialize, InstructionData, ToAccountMetas};
+use anyhow::{anyhow, Context, Result};
 use solana_client::nonblocking::rpc_client::RpcClient;
-use solana_sdk::{pubkey::Pubkey, instruction::{Instruction, AccountMeta}};
-use anyhow::{Result, anyhow, Context};
+use solana_sdk::{
+    instruction::{AccountMeta, Instruction},
+    program_pack::Pack,
+    pubkey::Pubkey,
+};
 
 const LP_TOKEN_MINT: Pubkey = solana_sdk::pubkey!("27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4");
 
 #[derive(Debug, Clone)]
-pub struct JLPCacheAccounts {
+pub struct JLPCacheAccountKeys {
     pub pool: Pubkey,
     pub perp: Pubkey,
     pub custody_accounts: Vec<JLPCustodyAccount>,
@@ -23,23 +27,36 @@ pub struct JLPCustodyAccount {
     pub oracle_account: Pubkey,
 }
 
+#[derive(Clone)]
+pub struct JLPCacheAccounts {
+    pub token_mint: spl_token::state::Mint,
+    pub pool: crate::Pool,
+}
 
-impl JLPCacheAccounts {
-    pub async fn create_lp_token_ata_ix(&self, rpc: &RpcClient ,owner: Pubkey) -> Option<Instruction> {
-        if rpc.get_account_data(
-            &spl_associated_token_account::get_associated_token_address(
+impl JLPCacheAccountKeys {
+    pub async fn create_lp_token_ata_ix(
+        &self,
+        rpc: &RpcClient,
+        owner: Pubkey,
+    ) -> Option<Instruction> {
+        if rpc
+            .get_account_data(&spl_associated_token_account::get_associated_token_address(
                 &owner,
-                &LP_TOKEN_MINT
-            )
-        ).await.is_ok() {
+                &LP_TOKEN_MINT,
+            ))
+            .await
+            .is_ok()
+        {
             return None;
         }
-        Some(spl_associated_token_account::instruction::create_associated_token_account(
-            &owner,
-            &owner,
-            &LP_TOKEN_MINT,
-            &spl_token::id()
-        ))
+        Some(
+            spl_associated_token_account::instruction::create_associated_token_account(
+                &owner,
+                &owner,
+                &LP_TOKEN_MINT,
+                &spl_token::id(),
+            ),
+        )
     }
     pub fn custody_account_for_mint(&self, mint: Pubkey) -> Option<JLPCustodyAccount> {
         for custody in &self.custody_accounts {
@@ -50,10 +67,13 @@ impl JLPCacheAccounts {
         None
     }
     /// loads all the account information that we need for JLP deposits
-    pub async fn load_accounts(rpc: &RpcClient, perp: Pubkey, pool: Pubkey) -> Result<JLPCacheAccounts> {
+    pub async fn load_account_keys(
+        rpc: &RpcClient,
+        perp: Pubkey,
+        pool: Pubkey,
+    ) -> Result<JLPCacheAccountKeys> {
         let acct_data = rpc.get_account_data(&pool).await?;
         let pool_acct = crate::Pool::deserialize(&mut &acct_data[8..])?;
-        let acct_data = rpc.get_account_data(&perp).await?;
         let mut custody_accounts = Vec::with_capacity(pool_acct.custodies.len());
         for custody in pool_acct.custodies {
             let acct_data = rpc.get_account_data(&custody).await?;
@@ -62,7 +82,7 @@ impl JLPCacheAccounts {
                 account: custody,
                 mint: custody_acct.mint,
                 token_account: custody_acct.token_account,
-                oracle_account: custody_acct.oracle.oracle_account
+                oracle_account: custody_acct.oracle.oracle_account,
             });
         }
 
@@ -71,36 +91,60 @@ impl JLPCacheAccounts {
             perp: perp,
             custody_accounts,
             transfer_authority: Pubkey::find_program_address(
-                &[&b"transfer_authority"[..]], &crate::id()
-            ).0,
+                &[&b"transfer_authority"[..]],
+                &crate::id(),
+            )
+            .0,
             event_authority: Pubkey::find_program_address(
-                &[&b"__event_authority"[..]], &crate::id()
-            ).0
+                &[&b"__event_authority"[..]],
+                &crate::id(),
+            )
+            .0,
         })
     }
-    pub async fn load_pool(&self, rpc: &RpcClient) -> Result<crate::Pool> {
-        let acct_data = rpc.get_account_data(&self.pool).await?;
-        let acct = crate::Pool::deserialize(&mut &acct_data[8..])?;
-        Ok(acct)
+    pub async fn load_accounts(&self, rpc: &RpcClient) -> Result<JLPCacheAccounts> {
+        let mut accounts = rpc
+            .get_multiple_accounts(&[self.pool, LP_TOKEN_MINT])
+            .await?;
+        let pool_acct = match std::mem::take(&mut accounts[0]) {
+            Some(pool_account) => crate::Pool::deserialize(&mut &pool_account.data[8..])?,
+            None => return Err(anyhow!("failed to get pool account")),
+        };
+        let lp_mint = match std::mem::take(&mut accounts[1]) {
+            Some(lp_account) => spl_token::state::Mint::unpack(&lp_account.data[..])?,
+            None => return Err(anyhow!("failed to get mint account")),
+        };
+        Ok(JLPCacheAccounts {
+            token_mint: lp_mint,
+            pool: pool_acct,
+        })
     }
-    pub fn generate_liquidity_add_ix(&self, deposit_mint: Pubkey, owner: Pubkey, deposit_amount: u64) -> Result<Instruction> {
-        let custody_info = self.custody_account_for_mint(deposit_mint).with_context(|| "no custody account for mint")?;
+    pub fn generate_liquidity_add_ix(
+        &self,
+        deposit_mint: Pubkey,
+        owner: Pubkey,
+        deposit_amount: u64,
+        min_out: u64,
+    ) -> Result<Instruction> {
+        let custody_info = self
+            .custody_account_for_mint(deposit_mint)
+            .with_context(|| "no custody account for mint")?;
         let ix_data = crate::instruction::AddLiquidity {
             _params: crate::AddLiquidityParams {
                 token_amount_in: deposit_amount,
-                min_lp_amount_out: 1,
-                token_amount_pre_swap: None
-            }
+                min_lp_amount_out: min_out,
+                token_amount_pre_swap: None,
+            },
         };
         let mut ix_accounts = crate::accounts::AddLiquidity {
             owner,
             funding_account: spl_associated_token_account::get_associated_token_address(
                 &owner,
-                &deposit_mint
+                &deposit_mint,
             ),
             lp_token_account: spl_associated_token_account::get_associated_token_address(
                 &owner,
-                &LP_TOKEN_MINT
+                &LP_TOKEN_MINT,
             ),
             transfer_authority: self.transfer_authority,
             perpetuals: self.perp,
@@ -111,8 +155,9 @@ impl JLPCacheAccounts {
             lp_token_mint: LP_TOKEN_MINT,
             token_program: spl_token::id(),
             event_authority: self.event_authority,
-            program: crate::id()
-        }.to_account_metas(None);
+            program: crate::id(),
+        }
+        .to_account_metas(None);
 
         for custody in &self.custody_accounts {
             if custody.mint.eq(&deposit_mint) {
@@ -128,7 +173,15 @@ impl JLPCacheAccounts {
         Ok(Instruction {
             program_id: crate::id(),
             accounts: ix_accounts,
-            data: ix_data.data()
+            data: ix_data.data(),
         })
+    }
+}
+
+impl JLPCacheAccounts {
+    pub fn calculate_jlp_price(&self) -> f64 {
+        let supply =
+            spl_token::amount_to_ui_amount(self.token_mint.supply, self.token_mint.decimals);
+        (self.pool.aum_usd as f64 / supply) / 10_usize.pow(self.token_mint.decimals as u32) as f64
     }
 }

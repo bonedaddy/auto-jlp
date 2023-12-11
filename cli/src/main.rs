@@ -7,57 +7,56 @@ use {
     config::Configuration,
 };
 
-mod check_jlp_liquidity;
 mod auto_depositor;
+mod check_jlp_liquidity;
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
     let matches = Command::new("auto-jlp")
         .arg(config_flag())
         .arg(debug_flag())
-        .subcommands(
-            vec![
-                Command::new("config")
+        .subcommands(vec![
+            Command::new("config")
                 .about("configuration management commands")
                 .subcommands(vec![Command::new("new")
-                .aliases(["gen", "generate"])
-                .about("create and save a new configuration file")
-                .arg(keypair_type_flag())]),
-                Command::new("check-jlp-liquidity"),
-                Command::new("auto-deposit")
+                    .aliases(["gen", "generate"])
+                    .about("create and save a new configuration file")
+                    .arg(keypair_type_flag())]),
+            Command::new("check-jlp-liquidity"),
+            Command::new("auto-deposit")
                 .arg(
                     Arg::new("deposit-mint")
-                    .long("deposit-mint")
-                    .help("token mint to deposit, only usdc supported")
+                        .long("deposit-mint")
+                        .help("token mint to deposit, only usdc supported"),
                 )
                 .arg(
                     Arg::new("deposit-amount")
-                    .long("deposit-amount")
-                    .help("ui amount (ie: 1.5) to deposit")
-                    .long_help("if larger than free space, 10% of free space is used")
-                    .value_parser(clap::value_parser!(f64))
-                )
-                .arg(
-                    Arg::new("deposit-mint-dollar-value")
-                    .long("deposit-mint-dollar-value")
-                    .help("approximate dollar value of 1 whole deposit token")
-                    .value_parser(clap::value_parser!(u128))
+                        .long("deposit-amount")
+                        .help("ui amount (ie: 1.5) to deposit")
+                        .long_help("if larger than free space, 10% of free space is used")
+                        .value_parser(clap::value_parser!(f64)),
                 )
                 .arg(
                     Arg::new("force")
-                    .long("force")
-                    .help("always force deposit regardless of available capacity")
-                    .action(clap::ArgAction::SetTrue)
-                    .required(false)
+                        .long("force")
+                        .help("always force deposit regardless of available capacity")
+                        .action(clap::ArgAction::SetTrue)
+                        .required(false),
+                )
+                .arg(
+                    Arg::new("skip-capacity-check")
+                        .long("skip-capacity-check")
+                        .help("skip capacity check")
+                        .action(clap::ArgAction::SetTrue)
+                        .required(false),
                 )
                 .arg(
                     Arg::new("priority-fee")
-                    .long("priority-fee")
-                    .help("priority fee to use (ie: 0.01)")
-                    .value_parser(clap::value_parser!(f64))
-                )
-            ]
-        )
+                        .long("priority-fee")
+                        .help("priority fee to use (ie: 0.01)")
+                        .value_parser(clap::value_parser!(f64)),
+                ),
+        ])
         .get_matches();
 
     let conf_path = matches.get_one::<String>("config").unwrap();
@@ -82,9 +81,7 @@ async fn process_matches(matches: &ArgMatches, conf_path: &str) -> Result<()> {
         Some(("check-jlp-liquidity", cjl)) => {
             Ok(check_jlp_liquidity::check_jlp_liquidity(cjl, conf_path).await?)
         }
-        Some(("auto-deposit", ad)) => {
-            Ok(auto_depositor::auto_deposit(ad, conf_path).await?)
-        }
+        Some(("auto-deposit", ad)) => Ok(auto_depositor::auto_deposit(ad, conf_path).await?),
         _ => Err(anyhow!("{INVALID_COMMAND}")),
     }
 }

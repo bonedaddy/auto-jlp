@@ -7,9 +7,10 @@ pub fn init_logger(debug: bool) {
             tracing::Level::DEBUG
         } else {
             tracing::Level::INFO
-        }).init();
-        /*.json()
-        .init();*/
+        })
+        .init();
+    /*.json()
+    .init();*/
 }
 
 #[cfg(test)]
