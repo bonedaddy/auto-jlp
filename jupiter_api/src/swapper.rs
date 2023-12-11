@@ -20,7 +20,7 @@ impl Swapper {
     }
     pub async fn new_swap(self: &Arc<Self>, swap_response: SwapResponse, skip_preflight: bool, retries: usize) -> Result<Signature> {
         let kp = Keypair::from_bytes(&self.keypair_bytes)?;
-        let v0_msg = swap_response.new_v0_transaction(&self.rpc, kp.pubkey(), Some(prio_fee(0.001)), Some(475_000)).await?;
+        let v0_msg = swap_response.new_v0_transaction(&self.rpc, kp.pubkey(), Some(prio_fee(0.001)), Some(1_000_000)).await?;
         let v_tx = VersionedTransaction::try_new(
             VersionedMessage::V0(v0_msg),
             &vec![&kp]

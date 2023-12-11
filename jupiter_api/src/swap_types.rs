@@ -29,17 +29,26 @@ pub struct SwapRequest {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SwapResponse {
-    pub token_ledger_instruction: InstructionBase,
-    pub compute_budget_instructions: Vec<InstructionBase>,
-    pub setup_instructions: Vec<InstructionBase>,
-    pub swap_instruction: InstructionBase,
-    pub cleanup_instruction: InstructionBase,
+    pub token_ledger_instruction: serde_json::Value,
+    pub compute_budget_instructions: Vec<ComputeBudgetIx>,
+    pub setup_instructions: Vec<SetupInstruction>,
+    pub swap_instruction: SwapInstruction,
+    pub cleanup_instruction: CleanupInstruction,
     pub address_lookup_table_addresses: Vec<String>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InstructionBase {
+pub struct ComputeBudgetIx {
+    pub program_id: String,
+    pub accounts: Vec<serde_json::Value>,
+    pub data: String,
+}
+
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupInstruction {
     pub program_id: String,
     pub accounts: Vec<Account>,
     pub data: String,
@@ -51,6 +60,22 @@ pub struct Account {
     pub pubkey: String,
     pub is_signer: bool,
     pub is_writable: bool,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SwapInstruction {
+    pub program_id: String,
+    pub accounts: Vec<Account>,
+    pub data: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CleanupInstruction {
+    pub program_id: String,
+    pub accounts: Vec<Account>,
+    pub data: String,
 }
 
 impl SwapResponse {
@@ -96,7 +121,67 @@ impl SwapResponse {
     }
 }
 
-impl InstructionBase {
+impl SetupInstruction {
+    pub fn to_instruction(&self) -> anyhow::Result<Instruction> {
+        let ix_data = b64.decode(&self.data)?;
+        let expected_size = self.accounts.len();
+        let accounts: Vec<AccountMeta> = self
+            .accounts
+            .iter()
+            .filter_map(|acct| {
+                if acct.is_writable {
+                    Some(AccountMeta::new(acct.pubkey.parse().ok()?, acct.is_signer))
+                } else {
+                    Some(AccountMeta::new_readonly(
+                        acct.pubkey.parse().ok()?,
+                        acct.is_signer,
+                    ))
+                }
+            })
+            .collect();
+        if accounts.len() != expected_size {
+            return Err(anyhow!("account parse failed"));
+        }
+        Ok(Instruction {
+            program_id: self.program_id.parse()?,
+            accounts,
+            data: ix_data,
+        })
+    }
+}
+
+
+impl SwapInstruction {
+    pub fn to_instruction(&self) -> anyhow::Result<Instruction> {
+        let ix_data = b64.decode(&self.data)?;
+        let expected_size = self.accounts.len();
+        let accounts: Vec<AccountMeta> = self
+            .accounts
+            .iter()
+            .filter_map(|acct| {
+                if acct.is_writable {
+                    Some(AccountMeta::new(acct.pubkey.parse().ok()?, acct.is_signer))
+                } else {
+                    Some(AccountMeta::new_readonly(
+                        acct.pubkey.parse().ok()?,
+                        acct.is_signer,
+                    ))
+                }
+            })
+            .collect();
+        if accounts.len() != expected_size {
+            return Err(anyhow!("account parse failed"));
+        }
+        Ok(Instruction {
+            program_id: self.program_id.parse()?,
+            accounts,
+            data: ix_data,
+        })
+    }
+}
+
+
+impl CleanupInstruction {
     pub fn to_instruction(&self) -> anyhow::Result<Instruction> {
         let ix_data = b64.decode(&self.data)?;
         let expected_size = self.accounts.len();
