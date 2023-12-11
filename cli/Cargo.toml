@@ -39,3 +39,5 @@ rev = "8115ff25ad1a76f46ae8045abbad5f5b99671f76"
 features = ["cpi"]
 [dependencies.jupiter_api]
 path = "../jupiter_api"
+[dependencies.spl-associated-token-account]
+version = "2"

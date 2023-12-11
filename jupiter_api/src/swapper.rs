@@ -39,6 +39,10 @@ impl Swapper {
             Err(err) => return Err(anyhow!("failed execute swap {err:#?}"))
         }
     }
+    pub fn keypair(self: &Arc<Self>) -> Keypair {
+        // if this fails something fucked up
+        Keypair::from_bytes(&self.keypair_bytes).unwrap()
+    }
 }
 
 pub fn prio_fee(input: f64) -> u64 {
