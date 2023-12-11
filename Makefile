@@ -14,3 +14,8 @@ lint:
 
 .PHONY: do-lint
 do-lint: lint
+
+.PHONY: build-optimized
+build-optimized:
+	RUSTFLAGS="-C target-cpu=native" cargo build --release
+	cp target/release/cli auto-jlp
