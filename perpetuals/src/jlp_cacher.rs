@@ -8,6 +8,7 @@ use solana_sdk::{
 };
 
 pub const LP_TOKEN_MINT: Pubkey = solana_sdk::pubkey!("27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4");
+pub const USDC_TOKEN_MINT: Pubkey = solana_sdk::pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 
 #[derive(Debug, Clone)]
 pub struct JLPCacheAccountKeys {

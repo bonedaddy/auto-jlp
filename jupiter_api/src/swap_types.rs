@@ -33,7 +33,7 @@ pub struct SwapResponse {
     pub compute_budget_instructions: Vec<ComputeBudgetIx>,
     pub setup_instructions: Vec<SetupInstruction>,
     pub swap_instruction: SwapInstruction,
-    pub cleanup_instruction: CleanupInstruction,
+    //pub cleanup_instruction: CleanupInstruction,
     pub address_lookup_table_addresses: Vec<String>,
 }
 

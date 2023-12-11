@@ -2,7 +2,7 @@ use anyhow::Context;
 
 use crate::{
     quote_types::{format_quote_url, QuoteResponse, RequestOption},
-    swap_types::{SwapRequest, SwapResponse, SWAP_BASE},
+    swap_types::{SwapRequest, SwapResponse, SWAP_BASE}, price_types::{format_price_url, PriceResponse},
 };
 
 pub struct Client {
@@ -55,6 +55,18 @@ impl Client {
             .build()?;
         Ok(self.c.execute(request).await?.json().await?)
     }
+    pub async fn price_query(
+        &self,
+        input_mint: &str,
+        output_mint: &str
+    ) -> anyhow::Result<PriceResponse> {
+        let request = self
+        .c
+        .get(format_price_url(input_mint, output_mint))
+        .header("Content-Type", "application/json")
+        .build()?;
+        Ok(self.c.execute(request).await.with_context(|| "failed to execute price query")?.json().await.with_context(|| "faled to deserialize price query")?)
+    }
 }
 
 #[cfg(test)]
@@ -84,5 +96,11 @@ mod test {
             .unwrap();
         let response = serde_json::to_string_pretty(&response).unwrap();
         println!("{}", response);
+
+        let price_response = client.price_query(
+                "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4",
+                "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        ).await.unwrap();
+        println!("{:#?}", price_response);
     }
 }
