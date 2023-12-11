@@ -7,3 +7,5 @@ config/conf_2auto-jlp
 auto-jlp
 
 config.yaml
+
+auto_jlp.json

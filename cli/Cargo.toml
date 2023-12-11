@@ -30,3 +30,6 @@ version = "0.4"
 version = "3"
 [dependencies.solana-client]
 version = "1.17"
+[dependencies.mimalloc]
+version = "*"
+default-features = false
