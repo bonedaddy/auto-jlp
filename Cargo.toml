@@ -3,7 +3,9 @@ members = [
     "cli",
     "config",
     "utils",
-    "perpetuals"
+    "perpetuals",
+    "program",
+    "jupiter_api"
 ]
 resolver = "2"
 [profile.release]

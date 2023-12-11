@@ -9,6 +9,8 @@ use {
 
 mod auto_depositor;
 mod check_jlp_liquidity;
+mod swapper;
+
 
 #[tokio::main]
 pub async fn main() -> Result<()> {
@@ -56,6 +58,23 @@ pub async fn main() -> Result<()> {
                         .help("priority fee to use (ie: 0.01)")
                         .value_parser(clap::value_parser!(f64)),
                 ),
+                Command::new("swap-tokens")
+                .arg(
+                    Arg::new("input-token")
+                    .long("input-token")
+                    .help("input token mint to swap")
+                )
+                .arg(
+                    Arg::new("output-token")
+                    .long("output-token")
+                    .help("output token mint to use")
+                )
+                .arg(
+                    Arg::new("swap-amount")
+                    .long("swap-amount")
+                    .help("ui amount of tokens to swap")
+                    .value_parser(clap::value_parser!(f64))
+                )
         ])
         .get_matches();
 
@@ -82,6 +101,7 @@ async fn process_matches(matches: &ArgMatches, conf_path: &str) -> Result<()> {
             Ok(check_jlp_liquidity::check_jlp_liquidity(cjl, conf_path).await?)
         }
         Some(("auto-deposit", ad)) => Ok(auto_depositor::auto_deposit(ad, conf_path).await?),
+        Some(("swap-tokens", st)) => Ok(swapper::swap_tokens(st, conf_path).await?),
         _ => Err(anyhow!("{INVALID_COMMAND}")),
     }
 }

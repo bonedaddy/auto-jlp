@@ -114,7 +114,7 @@ pub async fn auto_deposit(matches: &clap::ArgMatches, conf_path: &str) -> Result
                 // available capacity less than deposit amount so override deposit amount with capacity
                 room_for_deposit_usd as f64
             } else {
-                // use deposit amount
+                // use deposit
                 *deposit_amount
             };
             (
