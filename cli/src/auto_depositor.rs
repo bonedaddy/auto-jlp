@@ -77,6 +77,12 @@ pub async fn auto_deposit(matches: &clap::ArgMatches, conf_path: &str) -> Result
 
     let (swap_tx, swap_rx) = tokio::sync::mpsc::channel::<()>(128);
     let (exit_tx, exit_rx) = tokio::sync::oneshot::channel();
+
+    let usdc_ata = spl_associated_token_account::get_associated_token_address(
+        &keypair.pubkey(),
+        &deposit_mint
+    );
+
     {
         let swapper = swapper.clone();
         tokio::task::spawn(async move {
@@ -107,7 +113,7 @@ pub async fn auto_deposit(matches: &clap::ArgMatches, conf_path: &str) -> Result
 
             }
         }
-        let jlp_accounts = jlp_account_cache.load_accounts(&swapper.rpc).await?;
+        let jlp_accounts = jlp_account_cache.load_accounts(&swapper.rpc, usdc_ata).await?;
         let jlp_price = jlp_accounts.calculate_jlp_price();
 
         // compute the min jlp token per usdc
@@ -141,6 +147,13 @@ pub async fn auto_deposit(matches: &clap::ArgMatches, conf_path: &str) -> Result
             } else {
                 // use deposit
                 *deposit_amount
+            };
+            let cur_bal = spl_token::amount_to_ui_amount(jlp_accounts.usdc_token_account.amount, deposit_mint_acct.decimals);
+            // if the available room is more than our current balance, overwrite with our balance
+            let deposit_amount = if deposit_amount > cur_bal {
+                cur_bal
+            } else {
+                deposit_amount
             };
             (
                 spl_token::ui_amount_to_amount(deposit_amount, deposit_mint_acct.decimals),

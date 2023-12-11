@@ -31,6 +31,7 @@ pub struct JLPCustodyAccount {
 pub struct JLPCacheAccounts {
     pub token_mint: spl_token::state::Mint,
     pub pool: crate::Pool,
+    pub usdc_token_account: spl_token::state::Account,
 }
 
 impl JLPCacheAccountKeys {
@@ -102,9 +103,9 @@ impl JLPCacheAccountKeys {
             .0,
         })
     }
-    pub async fn load_accounts(&self, rpc: &RpcClient) -> Result<JLPCacheAccounts> {
+    pub async fn load_accounts(&self, rpc: &RpcClient, usdc_ata: Pubkey) -> Result<JLPCacheAccounts> {
         let mut accounts = rpc
-            .get_multiple_accounts(&[self.pool, LP_TOKEN_MINT])
+            .get_multiple_accounts(&[self.pool, LP_TOKEN_MINT, usdc_ata])
             .await?;
         let pool_acct = match std::mem::take(&mut accounts[0]) {
             Some(pool_account) => crate::Pool::deserialize(&mut &pool_account.data[8..])?,
@@ -114,9 +115,16 @@ impl JLPCacheAccountKeys {
             Some(lp_account) => spl_token::state::Mint::unpack(&lp_account.data[..])?,
             None => return Err(anyhow!("failed to get mint account")),
         };
+        let usdc_ata = match std::mem::take(&mut accounts[2]) {
+            Some(usdc_ata) => {
+                spl_token::state::Account::unpack(&usdc_ata.data[..])?
+            }
+            None => return Err(anyhow!("failed to get usdc account"))
+        };
         Ok(JLPCacheAccounts {
             token_mint: lp_mint,
             pool: pool_acct,
+            usdc_token_account: usdc_ata,
         })
     }
     pub fn generate_liquidity_add_ix(
