@@ -238,6 +238,7 @@ async fn swapi_boi(
         let jlp_swap_rate = jlp_swap_rate.clone();
         let swapper = swapper.clone();
         let swap_api = swap_api.clone();
+        let jlp_account_cache = jlp_account_cache.clone();
         tokio::task::spawn(async move {
             let mut ticker = tokio::time::interval(std::time::Duration::from_secs(60));
             loop {
@@ -269,6 +270,7 @@ async fn swapi_boi(
 
 
     loop {
+
         log::info!("waiting for swap requests");
         tokio::select! {
             biased;
@@ -305,6 +307,18 @@ async fn swapi_boi(
         if jlp_swap_price *0.99 < jlp_pool_price {
             log::info!("99% of swap price {jlp_swap_price} is less than pool price {jlp_pool_price}, skipping swap");
             continue;
+        }
+        match jlp_account_cache.load_accounts(&swapper.rpc, usdc_ata).await {
+            Ok(acct_cache) => {
+                if !acct_cache.free_space() {
+                    log::warn!("no free space, holding JLP");
+                    continue;
+                }
+            }
+            Err(err) => {
+                log::error!("failed to load jlp accounts {err:#?}");
+                continue;
+            }
         }
         for _ in 0..3 {
             match swap_api.new_quote(
