@@ -193,4 +193,7 @@ impl JLPCacheAccounts {
             spl_token::amount_to_ui_amount(self.token_mint.supply, self.token_mint.decimals);
         (self.pool.aum_usd as f64 / supply) / 10_usize.pow(self.token_mint.decimals as u32) as f64
     }
+    pub fn free_space(&self) -> bool {
+        self.pool.aum_usd < self.pool.limit.max_aum_usd
+    }
 }
