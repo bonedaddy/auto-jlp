@@ -230,6 +230,8 @@ async fn swapi_boi(
     );
     let swap_api = Arc::new(jupiter_api::client::Client::new()?);
 
+    let mut swap_check_ticker = tokio::time::interval(std::time::Duration::from_millis(250));
+
     let jlp_pool_rate = Arc::new(AtomicF64::new(0.0));
     let jlp_swap_rate = Arc::new(AtomicF64::new(0.0));
 
@@ -274,13 +276,17 @@ async fn swapi_boi(
         log::info!("waiting for swap requests");
         tokio::select! {
             biased;
-            _ = swap_trigger.recv() => {},
+            _ = swap_trigger.recv() => {
+                log::info!("swap trigger received");
+            },
+            _ = swap_check_ticker.tick() => {
+                log::debug!("checking for swap");
+            }
             _ = &mut exit_rx => {
                 log::info!("swapi_boi goodbye");
                 return Ok(());
             }
         }
-        log::info!("swapping...");
         let jlp_tkn_acct = match swapper.rpc.get_account_data(&jlp_ata).await {
             Ok(jlp_ata_acct_data) => {
                 match spl_token::state::Account::unpack(&jlp_ata_acct_data) {
@@ -305,7 +311,7 @@ async fn swapi_boi(
         log::info!("swapi_boi::pricer::swap_jlp_price({jlp_swap_price})");
         // only swap if 99% of the swap price is greater than pool price
         if jlp_swap_price *0.99 < jlp_pool_price {
-            log::info!("99% of swap price {jlp_swap_price} is less than pool price {jlp_pool_price}, skipping swap");
+            log::debug!("99% of swap price {jlp_swap_price} is less than pool price {jlp_pool_price}, skipping swap");
             continue;
         }
         match jlp_account_cache.load_accounts(&swapper.rpc, usdc_ata).await {
@@ -320,6 +326,7 @@ async fn swapi_boi(
                 continue;
             }
         }
+        log::info!("free space available, swapping...");
         for _ in 0..3 {
             match swap_api.new_quote(
                 LP_MINT_STR,
