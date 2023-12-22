@@ -273,7 +273,6 @@ async fn swapi_boi(
 
     loop {
 
-        log::info!("waiting for swap requests");
         tokio::select! {
             biased;
             _ = swap_trigger.recv() => {
@@ -341,7 +340,7 @@ async fn swapi_boi(
                             match swapper.new_swap(swap_response, false, 5).await {
                                 Ok(sig) => {
                                     log::info!("sent swap tx {}", sig);
-                                    continue;
+                                    break;
                                 }
                                 Err(err) => {
                                     log::error!("failed to execute swap {err:#?}, retrying...");
@@ -361,8 +360,6 @@ async fn swapi_boi(
                 }
             }
         }
-        log::error!("quote retry failed");
-
     }
 }
 
