@@ -309,8 +309,8 @@ async fn swapi_boi(
         log::info!("swapi_boi::swapper::pool_jlp_price({jlp_pool_price})");
         log::info!("swapi_boi::pricer::swap_jlp_price({jlp_swap_price})");
         // only swap if 99% of the swap price is greater than pool price
-        if jlp_swap_price *0.99 < jlp_pool_price {
-            log::debug!("99% of swap price {jlp_swap_price} is less than pool price {jlp_pool_price}, skipping swap");
+        if jlp_swap_price < jlp_pool_price*1.02 {
+            log::debug!("wap price {jlp_swap_price} is less than pool price {}, skipping swap", jlp_pool_price*1.02);
             continue;
         }
         match jlp_account_cache.load_accounts(&swapper.rpc, usdc_ata).await {
